@@ -141,6 +141,9 @@ optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
 epochs = 5000
 
+# LISTA PARA GUARDAR EL ERROR
+loss_history = []
+
 for epoch in range(epochs):
 
     X = sample_interior(2000)
@@ -155,9 +158,25 @@ for epoch in range(epochs):
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
+    
+    # GUARDAMOS EL ERROR EN LA LISTA
+    loss_history.append(loss.item())
 
     if epoch % 500 == 0:
         print(f"Epoch {epoch} | Loss Total: {loss.item():.6f}")
+
+
+
+plt.figure(figsize=(8, 5))
+plt.plot(loss_history, color='blue', linewidth=1.5, label='Loss Total')
+plt.yscale('log') # Escala logarítmica recomendada para PINNs
+plt.xlabel('Épocas (Epochs)')
+plt.ylabel('Loss')
+plt.title('Evolución del Error durante el Entrenamiento')
+plt.grid(True, which="both", ls="--", alpha=0.5)
+plt.legend()
+plt.tight_layout()
+plt.show()     
 
 # ==========================================
 # VISUALIZACIÓN, GROUND TRUTH Y DENSIDAD
