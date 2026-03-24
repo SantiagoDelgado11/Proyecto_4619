@@ -192,22 +192,22 @@ phi_true = (-I / (np.pi * sigma_cte)) * np.log(r_plus) + (I / (np.pi * sigma_cte
 
 error = np.abs(phi_true - phi_pred)
 
-fig, axs = plt.subplots(2, 2, figsize=(12, 10))
+fig, axs = plt.subplots(1, 3, figsize=(18, 5))
 
-im0 = axs[0, 0].contourf(X, Y, phi_true, 50, cmap='viridis')
-axs[0, 0].scatter([x_plus, x_minus], [y_plus, y_minus], c='red', edgecolor='k')
-axs[0, 0].set_title("Ground Truth (Semi-espacio Infinito)")
-fig.colorbar(im0, ax=axs[0, 0])
+im0 = axs[0].contourf(X, Y, phi_true, 50, cmap='viridis')
+axs[0].scatter([x_plus, x_minus], [y_plus, y_minus], c='red', edgecolor='k')
+axs[0].set_title("Ground Truth (Semi-espacio Infinito)")
+fig.colorbar(im0, ax=axs[0])
 
-im1 = axs[0, 1].contourf(X, Y, phi_pred, 50, cmap='viridis')
-axs[0, 1].scatter([x_plus, x_minus], [y_plus, y_minus], c='red', edgecolor='k')
-axs[0, 1].set_title("Reconstrucción Potencial (PINN)")
-fig.colorbar(im1, ax=axs[0, 1])
+im1 = axs[1].contourf(X, Y, phi_pred, 50, cmap='viridis')
+axs[1].scatter([x_plus, x_minus], [y_plus, y_minus], c='red', edgecolor='k')
+axs[1].set_title("Reconstrucción Potencial (PINN)")
+fig.colorbar(im1, ax=axs[1])
 
-strm = axs[1, 1].streamplot(X, Y, J_x, J_y, color=np.sqrt(J_x**2 + J_y**2), cmap='autumn', linewidth=1)
-axs[1, 1].scatter([x_plus, x_minus], [y_plus, y_minus], c='red', edgecolor='k')
-axs[1, 1].set_title("Densidad de Corriente (Líneas de flujo)")
-fig.colorbar(strm.lines, ax=axs[1, 1])
+strm = axs[2].streamplot(X, Y, J_x, J_y, color=np.sqrt(J_x**2 + J_y**2), cmap='autumn', linewidth=1)
+axs[2].scatter([x_plus, x_minus], [y_plus, y_minus], c='red', edgecolor='k')
+axs[2].set_title("Densidad de Corriente (Líneas de flujo)")
+fig.colorbar(strm.lines, ax=axs[2])
 
 plt.tight_layout()
 plt.show()
