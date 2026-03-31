@@ -2,6 +2,13 @@ import torch
 import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
+import wandb
+
+
+WANDB_API_KEY = "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" 
+
+if WANDB_API_KEY:
+    wandb.login(key=WANDB_API_KEY)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -132,19 +139,36 @@ class InversePINN(nn.Module):
 def run_inverse_experiment():
     print(f"Buscando hardware: Entrenando en {device} \n")
     
-    # 1. Generar los datos (Imitar el trabajo de campo)
-    print("1. Simulando adquisición de datos sintéticos en la frontera con 1% de ruido ambiental...")
-    x_obs, y_obs, V_obs = generate_synthetic_measurements(n_electrodes=40, noise_level=0.01)
-    
-    # 2. Instanciar el Solucionador
-    model = InversePINN().to(device)
-    # Adam suele funcionar excelente para arrancar PINNs
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    
     # Hiperparámetros matemáticos
     epochs = 5000
     n_colloc = 2500       # Puntos para chequear las leyes de la física en el subsuelo
     lambda_data = 100.0   # Peso crítico: Obligamos a la red a no ignorar las matemáticas experimentales (d_obs)
+    lr = 1e-3
+    noise_level = 0.01
+    n_electrodes = 40
+    
+    # Inicializar Weights & Biases
+    wandb.init(
+        project="PINN_ERT",
+        name="Inversion_Homogenea",
+        config={
+            "epochs": epochs,
+            "n_colloc": n_colloc,
+            "lambda_data": lambda_data,
+            "learning_rate": lr,
+            "noise_level": noise_level,
+            "n_electrodes": n_electrodes
+        }
+    )
+    
+    # 1. Generar los datos (Imitar el trabajo de campo)
+    print(f"1. Simulando adquisición de datos sintéticos en la frontera con {noise_level*100}% de ruido...")
+    x_obs, y_obs, V_obs = generate_synthetic_measurements(n_electrodes=n_electrodes, noise_level=noise_level)
+    
+    # 2. Instanciar el Solucionador
+    model = InversePINN().to(device)
+    # Adam suele funcionar excelente para arrancar PINNs
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     
     print("\n2. Iniciando la inversión matemática oculta (Entrenamiento)...")
     loss_history = []
@@ -170,6 +194,14 @@ def run_inverse_experiment():
         loss.backward()
         optimizer.step()
         loss_history.append(loss.item())
+        
+        # Registrar métricas en wandb
+        wandb.log({
+            "Loss_Total": loss.item(),
+            "Loss_Data": loss_data.item(),
+            "Loss_PDE": loss_pde.item(),
+            "epoch": epoch
+        })
         
         if epoch % 500 == 0 or epoch == epochs - 1:
             print(f"Epoch {epoch:04d} | L_Total: {loss.item():.4e} | L_Data: {loss_data.item():.4e} | L_PDE: {loss_pde.item():.4e}")
@@ -225,6 +257,11 @@ def run_inverse_experiment():
     axs[3].legend()
     
     plt.tight_layout()
+    
+    # Subir la gráfica final a wandb antes de mostrarla
+    wandb.log({"Grafica_Resultados_Inversion": wandb.Image(fig)})
+    wandb.finish()
+    
     plt.show()
 
 if __name__ == "__main__":
